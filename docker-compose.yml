@@ -1,0 +1,45 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:15
+    container_name: nest_pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nestdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nest_backend
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/nestdb
+      DB_HOST: db
+      DB_PORT: 5432
+      PORT: 4000
+      FRONTEND_URL: http://localhost:3000
+      JWT_SECRET: supersecretprod
+    ports:
+      - "4000:4000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nest_frontend
+    ports:
+      - "3000:80"   # host port 3000 -> nginx port 80
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
